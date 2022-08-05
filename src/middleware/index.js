@@ -3,7 +3,7 @@ const jwt = require("jsonwebtoken");
 const User = require("../user/model")
 
 exports.hashPass = async (req, res, next) => {
-    // take a password out of the body, hashes that password with bcrypt, and then put it back in the body
+    // takes the password out of the body, hashes that password with bcrypt, and then puts it back in the body
     try {
         console.log("Hashing password.");
         req.body.password = await bcrypt.hash(req.body.password, 8)
@@ -16,13 +16,19 @@ exports.hashPass = async (req, res, next) => {
 }
 
 exports.comparePass = async (req, res, next) => {
-    //finds user in database, compares password from body with password from db
-    //if successful pass user to controller through req, if unsuccessful send error
+    // finds a user in the database, compares the body password with the db password,
+    // if successful passes the user to the controller through req, if unsuccessful sends error
     try {
+        // note: need check whether the password is in the body (login) or the query (delete)
+        if (req.query.password) {
+            request = req.query
+        } else {
+            request = req.body   
+        }
         console.log("Finding user");
-        req.user = await User.findOne({ username: req.body.username })
+        req.user = await User.findOne({ username: request.username })
         console.log("Checking password.");
-        if (req.user && (await bcrypt.compare(req.body.password, req.user.password))) {
+        if (req.user && (await bcrypt.compare(request.password, req.user.password))) {
             console.log("Sending request to controller.");
             next()
         } else {
@@ -30,12 +36,12 @@ exports.comparePass = async (req, res, next) => {
         }
     } catch (error) {
         console.log(error);
-        res.send({ err: error });
+        res.send({ err: error.message });
     }
 }
 
 exports.tokenCheck = async (req, res, next) => {
-    // gets the token from req, unlocks the token, finds a user with the id in the token, send the user to a controller
+    // gets a token from req, unlocks the token, finds a user with the id in the token, send the user to a controller
     try {
         console.log("Checking for Auth token.");
         const token = req.header("Authorization")
@@ -47,11 +53,12 @@ exports.tokenCheck = async (req, res, next) => {
         const user = await User.findById(decodedToken.id_)
         console.log("Passing user to request.");
         req.user = user
+        console.log(req.user);
         console.log("Sending request to controller.");
         next()
     } catch (error) {
         console.log(error);
-        res.status(500).send({ err: error })
+        res.status(500).send({ err: error.message })
     }
 }
 
