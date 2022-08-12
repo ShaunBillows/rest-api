@@ -3,8 +3,8 @@ const userRouter = Router();
 const { createUser, readUser, readAllUsers, deleteUser, updateUser, login } = require("./controllers");
 const { hashPass, comparePass, tokenCheck } = require("../middleware");
 
-// admin routes
-userRouter.get("/admin", readAllUsers);
+// search users routes
+userRouter.post("/user/find", readAllUsers);
 
 // user routes
 userRouter.get("/user", tokenCheck, readUser)

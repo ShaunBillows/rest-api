@@ -6,8 +6,9 @@ exports.login = async (req, res) => {
   // returns a jws token
   console.log("Request recieved by login.");
   try {
-    const token = await jwt.sign({ id_: req.user._id }, process.env.SECRET)
-    res.status(200).send({ msg: "Request processed.", token })
+    const token = await jwt.sign({ _id: req.user._id }, process.env.SECRET)
+    console.log("username is " + req.user.username);
+    res.status(200).send({ msg: "Request processed.", token, username: req.user.username })
   } catch (error) {
     console.log(error);
     res.status(500).send({ err: error.message });
@@ -18,8 +19,8 @@ exports.readAllUsers = async (req, res) => {
   // returns all usernames in the db
   console.log("Request recieved readAllUsers.");
   try {
-    const result = await User.find();
-    const allUsers = result.map( x => x.username) ;
+    const result = await User.find({username: new RegExp(req.body.username)});
+    const allUsers = result.map( x => x.username);
     console.log(allUsers);
     res.status(200).send({ msg: "Request processed.", allUsers });
   } catch (error) {
@@ -37,7 +38,11 @@ exports.createUser = async (req, res) => {
     const token = await jwt.sign({ _id: newUser._id }, process.env.SECRET)
     // note: we create a jwt token on the mongo db user id, 
     // hence when we decode it we can search for a user document by this id
-    res.status(200).send({ msg: "Request processed.", token });
+    if (token) {
+      res.status(200).send({ msg: "Request processed.", token, username: newUser.username });
+    } else {
+      throw new Error("Error creating token.")
+    }
   } catch (error) {
     console.log(error);
     res.status(500).send({ err: error.message });
@@ -95,8 +100,12 @@ exports.deleteUser = async (req, res) => {
     console.log(req.body);
     console.log(req.user.username);
     const result = await User.deleteOne({username: req.user.username});
-    console.log(result);
-    res.status(200).send({ msg: "Request processed.", result });
+    console.log(result)
+    if (result.deletedCount === 1) {
+      res.status(200).send({ msg: `User: ${req.user.username} deleted.` })
+    } else {
+      throw new Error("No user found.")
+    }
   } catch (error) {
     console.log(error);
     res.status(500).send({ err: error.message });
