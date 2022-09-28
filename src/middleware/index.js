@@ -18,6 +18,7 @@ exports.hashPass = async (req, res, next) => {
 exports.comparePass = async (req, res, next) => {
     // finds a user in the database, compares the body password with the db password,
     // if successful passes the user to the controller through req, if unsuccessful sends error
+    console.log("req recieved by comparePass");
     try {
         // note: need check whether the password is in the body (login) or the query (delete)
         if (req.query.password) {
@@ -28,7 +29,7 @@ exports.comparePass = async (req, res, next) => {
         console.log("Finding user");
         req.user = await User.findOne({ username: request.username })
         console.log("Checking password.");
-        if (req.user && (await bcrypt.compare(request.password, req.user.password))) {
+        if (req.user.username && (await bcrypt.compare(request.password, req.user.password))) {
             console.log("Sending request to controller.");
             next()
         } else {
@@ -50,10 +51,7 @@ exports.tokenCheck = async (req, res, next) => {
         const decodedToken = await jwt.verify(token, process.env.SECRET)
         console.log(decodedToken);
         console.log("Finding user by token id.");
-        const user = await User.findById(decodedToken.id_)
-        console.log("Passing user to request.");
-        req.user = user
-        console.log(req.user);
+        req.user = await User.findById(decodedToken._id)
         console.log("Sending request to controller.");
         next()
     } catch (error) {
