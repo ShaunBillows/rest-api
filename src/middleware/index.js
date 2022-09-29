@@ -33,11 +33,11 @@ exports.comparePass = async (req, res, next) => {
             console.log("Sending request to controller.");
             next()
         } else {
-            throw "Incorrect credentials.";
+            throw new Error("Incorrect credentials.");
         }
     } catch (error) {
         console.log(error);
-        res.send({ err: error.message });
+        res.status(500).send({ err: error.message });
     }
 }
 

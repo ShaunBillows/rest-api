@@ -96,7 +96,11 @@ exports.deleteUser = async (req, res) => {
     console.log(req.user.username);
     const result = await User.deleteOne({username: req.user.username});
     console.log(result);
-    res.status(200).send({ msg: "Request processed.", result });
+    if (result) {
+      res.status(200).send({ msg: "Request processed.", result });
+    } else {
+      throw new Error("Incorrect credentials")
+    }
   } catch (error) {
     console.log(error);
     res.status(500).send({ err: error.message });
